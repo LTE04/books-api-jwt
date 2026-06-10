@@ -1,0 +1,79 @@
+# ============================================================
+# Ch11 — JWT Auth end-to-end tests (VS Code REST Client)
+# Run each in order; copy access_token from Test 2 into @TOKEN
+# ============================================================
+
+@base = http://localhost:8000
+@TOKEN = PASTE_ACCESS_TOKEN_HERE
+
+### Test 0 — Health check (should return 200)
+GET {{base}}/
+
+### Test 1 — Register a new user (expect 201)
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Hilang",
+  "email": "hilang@example.com",
+  "password": "password123"
+}
+
+### Test 2 — Login as seeded member (expect 200 + access_token)
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "member@books.test",
+  "password": "password"
+}
+
+### Test 3 — GET /auth/me with valid token (expect 200 user object)
+GET {{base}}/auth/me
+Authorization: Bearer {{TOKEN}}
+
+### Test 4 — Create a book while authenticated (expect 201)
+POST {{base}}/api/books
+Authorization: Bearer {{TOKEN}}
+Content-Type: application/json
+
+{
+  "title": "Refactoring",
+  "author": "Martin Fowler",
+  "year": 2018
+}
+
+### Test 5 — Member tries to delete (expect 403 "Admins only")
+DELETE {{base}}/api/books/1
+Authorization: Bearer {{TOKEN}}
+
+### Test 6a — Login as admin to get admin token
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@books.test",
+  "password": "password"
+}
+
+### Test 6b — Delete with admin token (paste admin token below, expect 200)
+# @ADMIN_TOKEN = PASTE_ADMIN_TOKEN_HERE
+DELETE {{base}}/api/books/1
+Authorization: Bearer {{TOKEN}}
+
+### Test 7 — No token on protected route (expect 401)
+POST {{base}}/api/books
+Content-Type: application/json
+
+{
+  "title": "No Auth Book",
+  "author": "Ghost",
+  "year": 2024
+}
+
+### Test 8 — Tampered / invalid token (expect 401)
+GET {{base}}/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.tampered.signature
+
+### Test 9 — Public book list still works without token (expect 200)
+GET {{base}}/api/books

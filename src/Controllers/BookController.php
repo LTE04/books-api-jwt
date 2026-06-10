@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Repositories\BookRepository;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+
+final class BookController
+{
+    public function __construct(private BookRepository $books)
+    {
+    }
+
+    public function index(Request $request, Response $response): Response
+    {
+        $params = $request->getQueryParams();
+        $rows = $this->books->all(
+            (string) ($params['q'] ?? ''),
+            (int) ($params['limit'] ?? 0)
+        );
+
+        return $this->json($response, [
+            'count' => count($rows),
+            'data' => $rows,
+        ]);
+    }
+
+    public function show(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) ($args['id'] ?? 0);
+        $book = $this->books->find($id);
+
+        return $book
+            ? $this->json($response, $book)
+            : $this->json($response, ['error' => "Book {$id} not found"], 404);
+    }
+
+    public function create(Request $request, Response $response): Response
+    {
+        $body = (array) ($request->getParsedBody() ?? []);
+        $errors = $this->validate($body, requireAll: true);
+
+        if ($errors !== []) {
+            return $this->json($response, ['errors' => $errors], 400);
+        }
+
+        $id = $this->books->create($body);
+
+        return $this->json($response, [
+            'message' => 'Book created',
+            'data' => $this->books->find($id),
+        ], 201)->withHeader('Location', '/api/books/' . $id);
+    }
+
+    public function update(Request $request, Response $response, array $args): Response
+    {
+        $id = (int) ($args['id'] ?? 0);
+
+        if ($this->books->find($id) === null) {
+            return $this->json($response, ['error' => "Book {$id} not found"], 404);
+        }
+
+        $body = (array) ($request->getParsedBody() ?? []);
+        $errors = $this->validate($body, requireAll: false);
+
+        if ($errors !== []) {
+            return $this->json($response, ['errors' => $errors], 400);
+        }
+
+        $this->books->update($id, $body);
+
+        return $this->json($response, [
+            'message' => 'Book updated',
+            'data' => $this->books->find($id),
+        ]);
+    }
+
+    public function delete(Request $request, Response $response, array $args): Response
+    {
+        // Role check — only admins may delete books
+        $auth = (array) $request->getAttribute('auth', []);
+        if (($auth['role'] ?? 'member') !== 'admin') {
+            return $this->json($response, ['error' => 'Admins only'], 403);
+        }
+
+        $id = (int) ($args['id'] ?? 0);
+        $book = $this->books->find($id);
+
+        if ($book === null) {
+            return $this->json($response, ['error' => "Book {$id} not found"], 404);
+        }
+
+        $this->books->delete($id);
+
+        return $this->json($response, [
+            'message' => 'Book deleted',
+            'data' => $book,
+        ]);
+    }
+
+    private function validate(array $body, bool $requireAll): array
+    {
+        $errors = [];
+        $rules = [
+            'title' => fn(mixed $value): bool => is_string($value) && trim($value) !== '',
+            'author' => fn(mixed $value): bool => is_string($value) && trim($value) !== '',
+            'year' => fn(mixed $value): bool => (
+                is_numeric($value) && (int) $value >= 1000 && (int) $value <= (int) date('Y')
+            ),
+        ];
+
+        foreach ($rules as $field => $check) {
+            if ($requireAll && !array_key_exists($field, $body)) {
+                $errors[$field] = "{$field} is required";
+                continue;
+            }
+
+            if (array_key_exists($field, $body) && !$check($body[$field])) {
+                $errors[$field] = "{$field} is invalid";
+            }
+        }
+
+        return $errors;
+    }
+
+    private function json(Response $response, mixed $data, int $status = 200): Response
+    {
+        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+        return $response
+            ->withHeader('Content-Type', 'application/json; charset=utf-8')
+            ->withStatus($status);
+    }
+}
