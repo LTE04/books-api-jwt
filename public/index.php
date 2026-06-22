@@ -16,6 +16,10 @@ $app->addRoutingMiddleware();
 $app->addErrorMiddleware(true, true, true);
 $app->add(new Cors());
 
+$app->add(new App\Middleware\SecurityHeaders());  // ← added FIRST so it runs LAST 
+$app->add(new App\Middleware\JsonBodyParser()); 
+$app->add(new App\Middleware\Cors()); 
+
 (require __DIR__ . '/../src/routes.php')($app);
 
 $app->run();
