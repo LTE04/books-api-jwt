@@ -46,3 +46,40 @@ CREATE TABLE users (
 -- INSERT INTO users (name, email, password_hash, role) VALUES
 --   ('Demo Admin',  'admin@books.test',  '<PASTE_HASH_HERE>', 'admin'),
 --   ('Demo Member', 'member@books.test', '<PASTE_HASH_HERE>', 'member');
+
+INSERT INTO users (name, email, password_hash, role) VALUES
+(
+  'Demo Admin',
+  'admin@books.test',
+  '$2y$10$nnLNpaUm9uzzpl1LhP5ieOHTAqi74fPhUlEuj8t620GFoEZbNRb8q',
+  'admin'
+),
+(
+  'Demo Member',
+  'member@books.test',
+  '$2y$10$nnLNpaUm9uzzpl1LhP5ieOHTAqi74fPhUlEuj8t620GFoEZbNRb8q',
+  'member'
+);
+
+
+ALTER TABLE books
+ADD COLUMN created_by INT NULL AFTER genre,
+ADD CONSTRAINT fk_books_user
+FOREIGN KEY (created_by)
+REFERENCES users(id)
+ON DELETE SET NULL;
+
+UPDATE books SET created_by = 1 WHERE id IN (1,3);
+UPDATE books SET created_by = 2 WHERE id = 2;
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    occurred_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actor_id INT NULL,
+    action VARCHAR(50) NOT NULL,
+    target VARCHAR(80) NULL,
+    ip_address VARCHAR(45) NULL,
+    detail VARCHAR(500) NULL,
+    INDEX idx_action (action),
+    INDEX idx_actor (actor_id)
+) ENGINE=InnoDB;

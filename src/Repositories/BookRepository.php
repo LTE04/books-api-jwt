@@ -43,20 +43,18 @@ final class BookRepository
         return $row === false ? null : $row;
     }
 
-    public function create(array $book): int
-    {
-        $sql = 'INSERT INTO books (title, author, year, genre)
-                VALUES (:title, :author, :year, :genre)';
-
-        $this->pdo->prepare($sql)->execute([
-            ':title' => trim((string) $book['title']),
-            ':author' => trim((string) $book['author']),
-            ':year' => (int) $book['year'],
-            ':genre' => trim((string) ($book['genre'] ?? 'Uncategorised')),
-        ]);
-
-        return (int) $this->pdo->lastInsertId();
-    }
+    public function create(array $b, int $createdBy): int { 
+    $stmt = $this->pdo->prepare( 
+        'INSERT INTO books (title, author, year, genre, created_by) 
+         VALUES (:title, :author, :year, :genre, :owner)' 
+    ); 
+    $stmt->execute([ 
+        ':title' => trim($b['title']),    ':author' => trim($b['author']), 
+        ':year'  => (int)$b['year'],        ':genre'  => trim($b['genre'] ?? 'Uncategorised'), 
+        ':owner' => $createdBy, 
+    ]); 
+    return (int)$this->pdo->lastInsertId(); 
+    } 
 
     public function update(int $id, array $book): int
     {
