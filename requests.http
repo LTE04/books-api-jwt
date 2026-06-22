@@ -3,6 +3,7 @@
 # Run each in order; copy access_token from Test 2 into @TOKEN
 # ============================================================
 
+@TOKEN = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJib29rcy1hcGkiLCJzdWIiOjIsImlhdCI6MTc4MTA2MTgwNCwiZXhwIjoxNzgxMDY1NDA0LCJyb2xlIjoibWVtYmVyIiwiZW1haWwiOiJtZW1iZXJAYm9va3MudGVzdCJ9.o_mXr1odZyqbnD-56WSA5-6LOQGlj96RdMBP7ofKiso
 @base = http://localhost:8000
 @TOKEN = PASTE_ACCESS_TOKEN_HERE
 

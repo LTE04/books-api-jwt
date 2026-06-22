@@ -34,7 +34,7 @@ final class AuthMiddleware implements MiddlewareInterface
         try {
             $payload = $this->jwt->verify($matches[1]);
         } catch (\Throwable $e) {
-            error_log('[AuthMiddleware] ' . $e->getMessage());
+            error_log('[AuthMiddleware] ' . $e->getMessage() . ' | secret: ' . substr($_ENV['JWT_SECRET'] ?? 'MISSING', 0, 8));
             return $this->fail('Invalid or expired token');
         }
 
