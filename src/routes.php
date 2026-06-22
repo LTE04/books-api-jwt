@@ -9,6 +9,7 @@ use App\Middleware\AuthMiddleware;
 use App\Repositories\BookRepository;
 use App\Repositories\UserRepository;
 use Slim\App;
+use App\Middleware\RateLimit;
 
 return function (App $app): void {
     $pdo  = Database::get();
@@ -23,7 +24,13 @@ return function (App $app): void {
 
     // ── Auth (public) ─────────────────────────────────────────────
     $app->post('/auth/register', [$authCtrl, 'register']);
-    $app->post('/auth/login',    [$authCtrl, 'login']);
+    $loginMw = new RateLimit( 
+    (int)($_ENV['LOGIN_RATE_LIMIT']     ?? 5), 
+    (int)($_ENV['LOGIN_WINDOW_SECONDS'] ?? 60), 
+    'login' 
+    ); 
+  
+    $app->post('/auth/login', [$authCtrl, 'login'])->add($loginMw); 
 
     // ── Auth (protected) ──────────────────────────────────────────
     $app->get('/auth/me', [$authCtrl, 'me'])->add($auth);
