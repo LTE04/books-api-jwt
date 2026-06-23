@@ -52,8 +52,14 @@ final class BookController
             return $this->json($response, ['errors' => $errors], 400);
         }
 
-        $id = $this->books->create($body);
+        $auth = (array)$request->getAttribute('auth', []);
 
+        $id = $this->books->create(
+         $body,
+         (int)$auth['sub']
+        );
+
+    
         return $this->json($response, [
             'message' => 'Book created',
             'data' => $this->books->find($id),
@@ -64,9 +70,13 @@ final class BookController
     {
         $id = (int) ($args['id'] ?? 0);
 
-        if ($this->books->find($id) === null) {
-            return $this->json($response, ['error' => "Book {$id} not found"], 404);
-        }
+         $book = $this->books->find($id); 
+        if (!$book) return $this->json($s, ['error'=>'Not found'], 404); 
+  
+        $auth    = (array)$r->getAttribute('auth', []); 
+        $isOwner = (int)$book['created_by'] === (int)($auth['sub'] ?? 0); 
+        $isAdmin = ($auth['role'] ?? 'member') === 'admin'; 
+        if (!$isOwner && !$isAdmin) return $this->json($s, ['error'=>'Forbidden'], 403); 
 
         $body = (array) ($request->getParsedBody() ?? []);
         $errors = $this->validate($body, requireAll: false);
