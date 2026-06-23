@@ -1,7 +1,7 @@
 {
-  "name": "books-frontend-ch10",
+  "name": "books-frontend-ch12",
   "version": "1.0.0",
-  "description": "SCSM2223 Chapter 10 — Vue 3 + Vite frontend for the MySQL/PDO Books API.",
+  "description": "SCSM2223 Chapter 12 — Vue 3 + Vite + Pinia frontend (security-hardened).",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "axios":      "^1.7.0",
+    "pinia":      "^2.2.0",
     "vue":        "^3.4.0",
     "vue-router": "^4.3.0"
   },
